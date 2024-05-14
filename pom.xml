@@ -6,11 +6,11 @@
     <artifactId>homework-template-project</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
-    <description><!-- TODO: a brief description of your project --></description>
+    <description>Chess Game Puzzle</description>
     <developers>
         <developer>
-            <name><!-- TODO: your full name --></name>
-            <email><!-- TODO: your email address --></email>
+            <name>Gegë Dobruna</name>
+            <email>gegedobruna@mailbox.unideb.hu</email>
             <organization>Faculty of Informatics, University of Debrecen</organization>
             <organizationUrl>https://inf.unideb.hu/</organizationUrl>
         </developer>
