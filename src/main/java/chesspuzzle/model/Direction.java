@@ -1,5 +1,4 @@
 package chesspuzzle.model;
 
-public enum Direction  {
-
+public enum Direction {
 }
