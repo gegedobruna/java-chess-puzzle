@@ -1,6 +1,10 @@
 package chesspuzzle.model;
 
+import lombok.Getter;
+
+@Getter
 public enum Direction {
+
     KING_UP(-1, 0),
     KING_DOWN(1, 0),
     KING_LEFT(0, -1),
@@ -26,20 +30,11 @@ public enum Direction {
         this.colChange = colChange;
     }
 
-    public int getRowChange() {
-        return rowChange;
+    public boolean isKingMove() {
+        return this.name().startsWith("KING_");
     }
 
-    public int getColChange() {
-        return colChange;
-    }
-
-    public static Direction of(int rowChange, int colChange) {
-        for (Direction direction : values()) {
-            if (direction.rowChange == rowChange && direction.colChange == colChange) {
-                return direction;
-            }
-        }
-        throw new IllegalArgumentException("No such direction for rowChange: " + rowChange + ", colChange: " + colChange);
+    public boolean isKnightMove() {
+        return this.name().startsWith("KNIGHT_");
     }
 }

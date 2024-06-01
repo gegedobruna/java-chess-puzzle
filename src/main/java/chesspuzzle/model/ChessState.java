@@ -3,11 +3,10 @@ import puzzle.TwoPhaseMoveState;
 
 import java.util.Set;
 
-public class ChessState implements TwoPhaseMoveState<Direction>{
-
+public class ChessState implements TwoPhaseMoveState<Position>{
 
     @Override
-    public boolean isLegalToMoveFrom(Direction direction) {
+    public boolean isLegalToMoveFrom(Position position) {
         return false;
     }
 
@@ -17,22 +16,22 @@ public class ChessState implements TwoPhaseMoveState<Direction>{
     }
 
     @Override
-    public boolean isLegalMove(TwoPhaseMove<Direction> directionTwoPhaseMove) {
+    public boolean isLegalMove(TwoPhaseMove<Position> positionTwoPhaseMove) {
         return false;
     }
 
     @Override
-    public void makeMove(TwoPhaseMove<Direction> directionTwoPhaseMove) {
+    public void makeMove(TwoPhaseMove<Position> positionTwoPhaseMove) {
 
     }
 
     @Override
-    public Set<TwoPhaseMove<Direction>> getLegalMoves() {
-        return null;
+    public Set<TwoPhaseMove<Position>> getLegalMoves() {
+        return Set.of();
     }
 
     @Override
-    public TwoPhaseMoveState<Direction> clone() {
+    public TwoPhaseMoveState<Position> clone() {
         return null;
     }
 }
