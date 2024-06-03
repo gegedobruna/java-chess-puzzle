@@ -6,8 +6,6 @@ public record Position(int row, int col) {
         return new Position(row + direction.getRowChange(), col + direction.getColChange());
     }
 
-
-
     @Override
     public String toString() {
         return String.format("(%d, %d)", row, col);
