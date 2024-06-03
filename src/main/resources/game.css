@@ -1,0 +1,34 @@
+.light-square {
+    -fx-background-color: #f0d9b5;
+}
+
+.dark-square {
+    -fx-background-color: #b58863;
+}
+
+.highlighted-square {
+    -fx-background-color: yellow;
+}
+
+
+.legal-move-square {
+    -fx-background-color: lightgreen;
+}
+
+.goal-square {
+    -fx-background-color: lightblue;
+}
+
+.image-view {
+    -fx-fit-width: 40;
+    -fx-fit-height: 40;
+    -fx-preserve-ratio: true;
+}
+
+.vbox-padding {
+    -fx-padding: 30px;
+}
+
+.grid-padding {
+    -fx-padding: 30px;
+}
