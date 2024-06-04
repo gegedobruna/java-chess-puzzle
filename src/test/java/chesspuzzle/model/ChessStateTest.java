@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import puzzle.TwoPhaseMoveState.TwoPhaseMove;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,6 +16,8 @@ class ChessStateTest {
     private Position defaultKnightPosition;
     private Position kingPos;
     private Position knightPos;
+    private ChessState kingAttackingState;
+    private ChessState knightAttackingState;
 
     @BeforeEach
     void setUp() {
@@ -23,19 +26,21 @@ class ChessStateTest {
         chessState = new ChessState(defaultKingPosition, defaultKnightPosition);
         kingPos = new Position(3, 3);
         knightPos = new Position(4, 4);
+        kingAttackingState = new ChessState(new Position(1, 3), defaultKnightPosition);
+        knightAttackingState = new ChessState(defaultKingPosition, new Position(3, 3));
     }
 
     @Test
     void testDefaultConstructor() {
-        assertEquals(defaultKingPosition, chessState.getKingPosition());
-        assertEquals(defaultKnightPosition, chessState.getKnightPosition());
+        assertEquals(defaultKingPosition, chessState.getKingPosition().get());
+        assertEquals(defaultKnightPosition, chessState.getKnightPosition().get());
     }
 
     @Test
     void testCustomConstructor() {
         ChessState customState = new ChessState(kingPos, knightPos);
-        assertEquals(kingPos, customState.getKingPosition());
-        assertEquals(knightPos, customState.getKnightPosition());
+        assertEquals(kingPos, customState.getKingPosition().get());
+        assertEquals(knightPos, customState.getKnightPosition().get());
     }
 
     @Test
@@ -53,59 +58,61 @@ class ChessStateTest {
 
     @Test
     void testIsLegalToMoveFrom() {
-        Position knightAttackingKing = new Position(3, 3);
-        chessState = new ChessState(defaultKingPosition, knightAttackingKing);
-        assertTrue(chessState.isLegalToMoveFrom(chessState.getKingPosition()));
+        chessState = knightAttackingState;
+        assertTrue(chessState.isLegalToMoveFrom(chessState.getKingPosition().get()));
         assertFalse(chessState.isLegalToMoveFrom(new Position(0, 0)));
 
-        Position kingAttackingKnight = new Position(1, 3);
-        chessState = new ChessState(kingAttackingKnight, defaultKnightPosition);
-        assertTrue(chessState.isLegalToMoveFrom(chessState.getKnightPosition()));
+        chessState = kingAttackingState;
+        assertTrue(chessState.isLegalToMoveFrom(chessState.getKnightPosition().get()));
         assertFalse(chessState.isLegalToMoveFrom(new Position(0, 0)));
     }
 
     @Test
     public void testIsLegalMove() {
-        // Test a legal move for the king
+        // legal move for the king
         final Position fromKingLegal = defaultKingPosition;
         final Position toKingLegal = new Position(1, 1);
         final TwoPhaseMove<Position> kingLegalMove = new TwoPhaseMove<>(fromKingLegal, toKingLegal);
-        Position knightAttackingKing = new Position(3, 3);
-        chessState = new ChessState(defaultKingPosition, knightAttackingKing);
+        chessState = knightAttackingState;
         assertTrue(chessState.isLegalMove(kingLegalMove));
 
-        // Test a legal move for the knight
+        // legal move for the knight
         final Position fromKnightLegal = defaultKnightPosition;
         final Position toKnightLegal = new Position(0, 1);
         final TwoPhaseMove<Position> knightLegalMove = new TwoPhaseMove<>(fromKnightLegal, toKnightLegal);
-        Position kingAttackingKnight = new Position(1, 3);
-        chessState = new ChessState(kingAttackingKnight, defaultKnightPosition);
+        chessState = kingAttackingState;
         assertTrue(chessState.isLegalMove(knightLegalMove));
 
-        // Test an illegal move
+        // illegal move for the king
         final Position fromIllegal = defaultKingPosition;
-        final Position toIllegal = new Position(4, 4); // This is not a valid move for either the king or the knight
+        final Position toIllegal = new Position(4, 4); // invalid king move
         final TwoPhaseMove<Position> illegalMove = new TwoPhaseMove<>(fromIllegal, toIllegal);
         chessState = new ChessState(defaultKingPosition, defaultKnightPosition);
         assertFalse(chessState.isLegalMove(illegalMove));
+
+        // illegal move for the knight
+        final Position fromKnightIllegal = defaultKnightPosition;
+        final Position toKnightIllegal = new Position(0, 0); // invalid knight move
+        final TwoPhaseMove<Position> knightIllegalMove = new TwoPhaseMove<>(fromKnightIllegal, toKnightIllegal);
+        chessState = new ChessState(defaultKingPosition, defaultKnightPosition);
+        assertFalse(chessState.isLegalMove(knightIllegalMove));
     }
 
     @Test
     void testMakeKingMove() {
-        Position knightAttackingKing = new Position(3, 3);
-        chessState = new ChessState(defaultKingPosition, knightAttackingKing);
+        chessState = knightAttackingState;
 
         final Position fromLegal = defaultKingPosition;
         final Position toLegal = new Position(1, 1);
         final Position toIllegal = new Position(4, 4);
 
-        // Test a legal move for the king
+        // legal move for the king
         final TwoPhaseMove<Position> legalMove = new TwoPhaseMove<>(fromLegal, toLegal);
         assertTrue(chessState.isLegalMove(legalMove));
         chessState.makeMove(legalMove);
-        assertEquals(toLegal, chessState.getKingPosition());
+        assertEquals(toLegal, chessState.getKingPosition().get());
 
-        // Test an illegal move
+        // illegal move
         final TwoPhaseMove<Position> illegalMove = new TwoPhaseMove<>(fromLegal, toIllegal);
         assertFalse(chessState.isLegalMove(illegalMove));
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> chessState.makeMove(illegalMove));
@@ -114,35 +121,90 @@ class ChessStateTest {
 
     @Test
     void testMakeKnightMove() {
-        Position kingAttackingKnight = new Position(1, 3);
-        chessState = new ChessState(kingAttackingKnight, defaultKnightPosition);
+        chessState = kingAttackingState;
 
         final Position fromLegal = defaultKnightPosition;
         final Position toLegal = new Position(0, 1);
         final Position toIllegal = new Position(4, 4);
 
-        // Test a legal move for the knight
+        // legal move for the knight
         final TwoPhaseMove<Position> legalMove = new TwoPhaseMove<>(fromLegal, toLegal);
         assertTrue(chessState.isLegalMove(legalMove));
         chessState.makeMove(legalMove);
-        assertEquals(toLegal, chessState.getKnightPosition());
+        assertEquals(toLegal, chessState.getKnightPosition().get());
 
-        // Test an illegal move
+        // illegal move
         final TwoPhaseMove<Position> illegalMove = new TwoPhaseMove<>(fromLegal, toIllegal);
         assertFalse(chessState.isLegalMove(illegalMove));
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> chessState.makeMove(illegalMove));
         assertEquals("Illegal move: " + illegalMove, thrown.getMessage());
     }
 
-
     @Test
     void testGetLegalMoves() {
         Set<TwoPhaseMove<Position>> legalMoves = chessState.getLegalMoves();
         assertNotNull(legalMoves);
 
-        chessState = new ChessState(defaultKingPosition, new Position(3, 3));
+        chessState = knightAttackingState;
         legalMoves = chessState.getLegalMoves();
         assertEquals(8, legalMoves.size());
+    }
+
+    @Test
+    void testGetPieceAt() {
+        assertEquals(Optional.of(0), chessState.getPieceAt(2, 1)); // king
+        assertEquals(Optional.of(1), chessState.getPieceAt(2, 2)); // knight
+        assertEquals(Optional.empty(), chessState.getPieceAt(0, 0)); // empty cell
+    }
+
+    @Test
+    void testIsValid() {
+        assertTrue(chessState.isValid(new Position(0, 0)));
+        assertTrue(chessState.isValid(new Position(7, 7)));
+        assertFalse(chessState.isValid(new Position(-1, 0)));
+        assertFalse(chessState.isValid(new Position(8, 8)));
+    }
+
+    @Test
+    void testIsValidKingMove() {
+        assertTrue(chessState.isValidKingMove(new Position(0, 0), new Position(1, 1)));
+        assertTrue(chessState.isValidKingMove(new Position(1, 1), new Position(0, 0)));
+        assertFalse(chessState.isValidKingMove(new Position(0, 0), new Position(2, 2)));
+    }
+
+    @Test
+    void testIsValidKnightMove() {
+        assertTrue(chessState.isValidKnightMove(new Position(0, 0), new Position(2, 1)));
+        assertTrue(chessState.isValidKnightMove(new Position(2, 1), new Position(0, 0)));
+        assertFalse(chessState.isValidKnightMove(new Position(0, 0), new Position(3, 3)));
+    }
+
+    @Test
+    void testIsUnderAttack() {
+        // king is under attack by the knight
+        chessState = knightAttackingState;
+        assertTrue(chessState.isUnderAttack(chessState.getKingPosition().get(), chessState.getKnightPosition().get()));
+
+        // knight is under attack by the king
+        chessState = kingAttackingState;
+        assertTrue(chessState.isUnderAttack(chessState.getKnightPosition().get(), chessState.getKingPosition().get()));
+
+        // neither piece is under attack
+        assertFalse(chessState.isUnderAttack(new Position(0, 0), new Position(7, 7)));
+    }
+
+    @Test
+    void testCollectKingMoves() {
+        chessState = knightAttackingState;
+        Set<TwoPhaseMove<Position>> legalMoves = chessState.getLegalMoves();
+        assertTrue(legalMoves.stream().anyMatch(move -> move.from().equals(defaultKingPosition)));
+    }
+
+    @Test
+    void testCollectKnightMoves() {
+        chessState = kingAttackingState;
+        Set<TwoPhaseMove<Position>> legalMoves = chessState.getLegalMoves();
+        assertTrue(legalMoves.stream().anyMatch(move -> move.from().equals(defaultKnightPosition)));
     }
 
     @Test
@@ -178,5 +240,4 @@ class ChessStateTest {
         assertEquals("King: (5, 5), Knight: (6, 6)", state4.toString());
         assertEquals("King: (1, 1), Knight: (2, 3)", state5.toString());
     }
-
 }
