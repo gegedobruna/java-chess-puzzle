@@ -11,15 +11,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import org.tinylog.Logger;
 import util.SceneLoader;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Scoreboard {
 
@@ -37,7 +34,6 @@ public class Scoreboard {
     private TableColumn<GameResult, String> createdColumn;
 
     private final JsonGameResultManager gameResultManager = new JsonGameResultManager(Path.of("results.json"));
-
 
     @FXML
     private void initialize() {
@@ -65,15 +61,9 @@ public class Scoreboard {
 
     private void loadResults() {
         try {
-            List<GameResult> allResults = gameResultManager.getBest(10);
-            List<GameResult> solvedResults = allResults.stream()
-                    .filter(GameResult::isSolved)
-                    .sorted(Comparator.comparingInt(GameResult::getSteps)
-                            .thenComparing(GameResult::getDuration))
-                    .collect(Collectors.toList());
-
-            ObservableList<GameResult> results = FXCollections.observableArrayList(solvedResults);
-            tableView.setItems(results);
+            List<GameResult> results = gameResultManager.getBest(10);
+            ObservableList<GameResult> observableResults = FXCollections.observableArrayList(results);
+            tableView.setItems(observableResults);
         } catch (IOException e) {
             Logger.error(e, "Failed to load game results");
         }

@@ -30,7 +30,6 @@ import puzzle.TwoPhaseMoveState;
 import util.OrdinalImageStorage;
 import util.SceneLoader;
 import util.javafx.ImageStorage;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;

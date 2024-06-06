@@ -8,9 +8,20 @@ import puzzle.TwoPhaseMoveState;
 
 import java.util.*;
 
+/**
+ * Represents the state of the chess puzzle.
+ */
 @Getter
 public class ChessState implements TwoPhaseMoveState<Position> {
+    /**
+     * The size of the chess board.
+     */
     public static final int BOARD_SIZE = 8;
+
+    /**
+     * The goal position for the king or knight.
+     */
+    public static final Position goalPosition = new Position(0, 6);
 
     private final ReadOnlyObjectWrapper<Position> kingPosition = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Position> knightPosition = new ReadOnlyObjectWrapper<>();
@@ -18,15 +29,23 @@ public class ChessState implements TwoPhaseMoveState<Position> {
     private final ReadOnlyBooleanWrapper solved = new ReadOnlyBooleanWrapper();
     private final List<String[]> board;
 
+    /**
+     * Constructs a ChessState with default initial positions for the king and knight.
+     */
     public ChessState() {
         this(new Position(2, 1), new Position(2, 2));
     }
 
+    /**
+     * Constructs a ChessState with specified initial positions for the king and knight.
+     *
+     * @param kingPosition   the initial position of the king
+     * @param knightPosition the initial position of the knight
+     */
     public ChessState(Position kingPosition, Position knightPosition) {
         this.kingPosition.set(kingPosition);
         this.knightPosition.set(knightPosition);
         this.board = new ArrayList<>(BOARD_SIZE);
-        Position goalPosition = new Position(0, 6);
         initializeBoard();
         solved.bind(this.kingPosition.isEqualTo(goalPosition).or(this.knightPosition.isEqualTo(goalPosition)));
         checkDeadEndState();
@@ -42,6 +61,13 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         board.get(knightPosition.get().row())[knightPosition.get().col()] = "N";
     }
 
+    /**
+     * Retrieves the piece at the specified position on the board.
+     *
+     * @param row the row index of the board
+     * @param col the column index of the board
+     * @return an Optional containing the piece identifier if present (0 for king, 1 for knight), otherwise an empty Optional
+     */
     public Optional<Integer> getPieceAt(int row, int col) {
         String piece = board.get(row)[col];
         return switch (piece) {
@@ -51,23 +77,50 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         };
     }
 
-    boolean isValid(Position position) {
+    /**
+     * Checks if a given position is valid on the board.
+     *
+     * @param position the position to check
+     * @return true if the position is valid, false otherwise
+     */
+    public boolean isValid(Position position) {
         return position.row() >= 0 && position.row() < BOARD_SIZE && position.col() >= 0 && position.col() < BOARD_SIZE;
     }
 
+    /**
+     * Checks if a move from a given position to another position is valid for the king.
+     *
+     * @param from the starting position
+     * @param to the target position
+     * @return true if the move is valid, false otherwise
+     */
     public boolean isValidKingMove(Position from, Position to) {
         int dr = Math.abs(from.row() - to.row());
         int dc = Math.abs(from.col() - to.col());
         return dr <= 1 && dc <= 1;
     }
 
+    /**
+     * Checks if a move from a given position to another position is valid for the knight.
+     *
+     * @param from the starting position
+     * @param to the target position
+     * @return true if the move is valid, false otherwise
+     */
     public boolean isValidKnightMove(Position from, Position to) {
         int dr = Math.abs(from.row() - to.row());
         int dc = Math.abs(from.col() - to.col());
         return (dr == 2 && dc == 1) || (dr == 1 && dc == 2);
     }
 
-    boolean isUnderAttack(Position piecePosition, Position attackerPosition) {
+    /**
+     * Checks if a given position is under attack by another piece.
+     *
+     * @param piecePosition the position of the piece to check
+     * @param attackerPosition the position of the attacking piece
+     * @return true if the piece is under attack, false otherwise
+     */
+    public boolean isUnderAttack(Position piecePosition, Position attackerPosition) {
         if (piecePosition.equals(kingPosition.get())) {
             return isValidKnightMove(attackerPosition, piecePosition);
         } else if (piecePosition.equals(knightPosition.get())) {
@@ -76,6 +129,11 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         return false;
     }
 
+    /**
+     * Returns whether the current state is solved (i.e., the king or knight has reached the goal position).
+     *
+     * @return true if the state is solved, false otherwise
+     */
     @Override
     public boolean isSolved() {
         return solved.get();
@@ -86,6 +144,12 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         deadEnd.set(legalMoves.isEmpty());
     }
 
+    /**
+     * Checks if moving from a given position is legal according to the game rules.
+     *
+     * @param position the position to move from
+     * @return true if it is legal to move from the specified position, false otherwise
+     */
     @Override
     public boolean isLegalToMoveFrom(Position position) {
         if (position.equals(kingPosition.get())) {
@@ -96,6 +160,12 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         return false;
     }
 
+    /**
+     * Checks if a given move is legal according to the game rules.
+     *
+     * @param move the move to check
+     * @return true if the move is legal, false otherwise
+     */
     @Override
     public boolean isLegalMove(TwoPhaseMove<Position> move) {
         Position from = move.from();
@@ -110,6 +180,12 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         }
     }
 
+    /**
+     * Executes a given move, updating the state of the board.
+     *
+     * @param move the move to execute
+     * @throws IllegalArgumentException if the move is not legal
+     */
     @Override
     public void makeMove(TwoPhaseMove<Position> move) {
         if (!isLegalMove(move)) {
@@ -130,6 +206,11 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         checkDeadEndState();
     }
 
+    /**
+     * Retrieves a set of all legal moves available in the current state.
+     *
+     * @return a set of legal moves
+     */
     @Override
     public Set<TwoPhaseMove<Position>> getLegalMoves() {
         Set<TwoPhaseMove<Position>> legalMoves = new HashSet<>();
@@ -164,11 +245,22 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         }
     }
 
+    /**
+     * Creates a copy of the current ChessState.
+     *
+     * @return a clone of the current ChessState
+     */
     @Override
     public ChessState clone() {
         return new ChessState(kingPosition.get(), knightPosition.get());
     }
 
+    /**
+     * Checks if this ChessState is equal to another object.
+     *
+     * @param o the object to compare with
+     * @return true if the objects are equal, false otherwise
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -179,32 +271,65 @@ public class ChessState implements TwoPhaseMoveState<Position> {
                 knightPosition.get().equals(other.knightPosition.get());
     }
 
+    /**
+     * Computes the hash code for this ChessState.
+     * @return the hash code
+     */
     @Override
     public int hashCode() {
         return Objects.hash(kingPosition.get(), knightPosition.get());
     }
 
+    /**
+     * Returns a string representation of the ChessState.
+     * @return a string representation of the ChessState
+     */
     @Override
     public String toString() {
         return "King: " + kingPosition.get() + ", Knight: " + knightPosition.get();
     }
 
+    /**
+     * Returns the property representing the king's position.
+     *
+     * @return the ReadOnlyObjectWrapper for the king's position
+     */
     public ReadOnlyObjectWrapper<Position> kingPositionProperty() {
         return kingPosition;
     }
 
+    /**
+     * Returns the property representing the knight's position.
+     *
+     * @return the ReadOnlyObjectWrapper for the knight's position
+     */
     public ReadOnlyObjectWrapper<Position> knightPositionProperty() {
         return knightPosition;
     }
 
+    /**
+     * Returns the property representing whether the puzzle is solved.
+     *
+     * @return the ReadOnlyBooleanProperty for the solved state
+     */
     public ReadOnlyBooleanProperty solvedProperty() {
         return solved.getReadOnlyProperty();
     }
 
+    /**
+     * Returns the property representing whether the current state is a dead end.
+     *
+     * @return the ReadOnlyBooleanProperty for the dead end state
+     */
     public ReadOnlyBooleanProperty deadEndProperty() {
         return deadEnd.getReadOnlyProperty();
     }
 
+    /**
+     * Checks if the current state is a dead end (i.e., no legal moves available).
+     *
+     * @return true if the state is a dead end, false otherwise
+     */
     public boolean isDeadEnd() {
         return deadEnd.get();
     }
