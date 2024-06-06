@@ -1,18 +1,23 @@
 .light-square {
-    -fx-background-color: #f0d9b5;
+    -fx-background-color: #eeeed4;
 }
 
 .dark-square {
-    -fx-background-color: #b58863;
+    -fx-background-color: #7d945c;
+}
+
+.column-label, .row-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #245221;
+    -fx-font-family: "Book Antiqua";
 }
 
 .highlighted-square {
-    -fx-background-color: yellow;
+    -fx-background-color: #f4c175;
 }
 
-
 .legal-move-square {
-    -fx-background-color: lightgreen;
+    -fx-background-color: #e2514c;
 }
 
 .goal-square {

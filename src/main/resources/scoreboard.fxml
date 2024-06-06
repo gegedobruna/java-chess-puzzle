@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="444.0" prefWidth="598.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="chesspuzzle.game.Scoreboard">
+    <children>
+        <TableView fx:id="tableView" layoutX="56.0" layoutY="69.0" prefHeight="287.0" prefWidth="486.0">
+            <columns>
+                <TableColumn fx:id="rankColumn" minWidth="0.0" prefWidth="43.0" text="Rank" />
+                <TableColumn fx:id="playerNameColumn" prefWidth="153.5999755859375" text="Name" />
+                <TableColumn fx:id="stepsColumn" prefWidth="81.60002136230469" text="Steps" />
+                <TableColumn fx:id="durationColumn" prefWidth="82.60003662109375" text="Duration" />
+                <TableColumn fx:id="createdColumn" prefWidth="125.39996337890625" text="Date" />
+            </columns>
+        </TableView>
+        <Label alignment="CENTER" layoutX="193.0" layoutY="14.0" prefHeight="42.0" prefWidth="212.0" text="Player Ranking" textAlignment="CENTER">
+            <font>
+                <Font name="Book Antiqua Bold" size="27.0" />
+            </font>
+        </Label>
+        <Button layoutX="255.0" layoutY="383.0" mnemonicParsing="false" onAction="#goHome" prefHeight="30.0" prefWidth="88.0" text="Home" />
+    </children>
+</Pane>
