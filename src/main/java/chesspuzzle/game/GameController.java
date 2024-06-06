@@ -1,5 +1,7 @@
 package chesspuzzle.game;
 
+import chesspuzzle.model.ChessState;
+import chesspuzzle.model.Position;
 import chesspuzzle.results.GameResult;
 import chesspuzzle.results.GameResultRepo;
 import javafx.application.Platform;
@@ -8,10 +10,8 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -26,10 +26,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.tinylog.Logger;
-import chesspuzzle.model.ChessState;
-import chesspuzzle.model.Position;
 import puzzle.TwoPhaseMoveState;
 import util.OrdinalImageStorage;
+import util.SceneLoader;
 import util.javafx.ImageStorage;
 
 import java.io.IOException;
@@ -39,67 +38,76 @@ import java.time.ZonedDateTime;
 
 public class GameController {
 
+    // Fields
     private final ImageStorage<Integer> imageStorage = new OrdinalImageStorage("/chesspieces",
             "king.png",
             "knight.png");
     private final IntegerProperty numberOfMoves = new SimpleIntegerProperty(0);
     private final ReadOnlyObjectWrapper<Position> highlightedPosition = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyObjectWrapper<Position> goalPosition = new ReadOnlyObjectWrapper<>(new Position(0, 6)); // Example goal position (g1)
+    private final ReadOnlyObjectWrapper<Position> goalPosition = new ReadOnlyObjectWrapper<>(new Position(0, 6));
+    private ChessState state;
+    private final GameResultRepo gameResultRepository = GameResultRepo.getInstance();
+    private String playerName;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private boolean deadEndHandled = false;
+
+    // FXML Fields
     @FXML
     private GridPane grid;
     @FXML
     private TextField numberOfMovesField;
-    private ChessState state;
-
-    private final GameResultRepo gameResultRepository = GameResultRepo.getInstance();
-
-    // Change TextField for player name to Label
     @FXML
     private Label nameLabel;
-    private String playerName;
-
-    // Add necessary fields for tracking time
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-
     @FXML
-    private Button quitButton;  // Add quit button
-
+    private Button quitButton;
     @FXML
-    private Button closeGameButton; // Add button to close game after solving
+    private Button closeGameButton;
     @FXML
-    private Button goToScoreboardButton; // Add button to go to scoreboard after solving
+    private Button goToScoreboardButton;
 
+
+    // Constructor
     public GameController() {
     }
 
+    // Player Name Setter
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
+        nameLabel.setText(playerName);
+    }
+
+    // Initialization Method
     @FXML
     private void initialize() {
         numberOfMovesField.textProperty().bind(numberOfMoves.asString());
         createState();
         clearAndPopulateGrid();
         registerKeyEventHandler();
-
-        // Bind listeners to the king and knight positions
         state.kingPositionProperty().addListener((observable, oldPosition, newPosition) -> clearAndPopulateGrid());
         state.knightPositionProperty().addListener((observable, oldPosition, newPosition) -> clearAndPopulateGrid());
-
-        // Initialize start time when game starts
+        state.deadEndProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue && !deadEndHandled) {
+                deadEndHandled = true;
+                handleDeadEnd();
+            }
+        });
         startTime = LocalDateTime.now();
         setGridPaneStyle();
+    }
+
+    // State and Game Handling Methods
+    private void createState() {
+        state = new ChessState();
+        state.solvedProperty().addListener(this::handleGameOver);
+        highlightedPosition.set(null);
     }
 
     void restartGame() {
         createState();
         numberOfMoves.set(0);
         clearAndPopulateGrid();
-        startTime = LocalDateTime.now();
-    }
-
-    private void createState() {
-        state = new ChessState();
-        state.solvedProperty().addListener(this::handleGameOver);
-        highlightedPosition.set(null);
+        deadEndHandled = false;
     }
 
     private void handleGameOver(ObservableValue<? extends Boolean> observableValue, Boolean oldValue, Boolean newValue) {
@@ -112,13 +120,15 @@ public class GameController {
         });
     }
 
-    private void showSolvedAlert() {
-        var alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setHeaderText("Game Over");
-        alert.setContentText("Congratulations, you have solved the puzzle!");
-        closeGameButton.setVisible(true);
-        goToScoreboardButton.setVisible(true);
-        alert.showAndWait().ifPresent(response -> restartGame());
+    private void handleDeadEnd() {
+        if (!deadEndHandled) {
+            deadEndHandled = true;
+            Platform.runLater(() -> {
+                endTime = LocalDateTime.now();
+                saveResult(false);
+                showDeadEndAlert();
+            });
+        }
     }
 
     private void saveResult(boolean solved) {
@@ -136,6 +146,25 @@ public class GameController {
         }
     }
 
+    // Alert Methods
+    private void showDeadEndAlert() {
+        var alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText("Dead End");
+        alert.setContentText("No moves can be made and no piece is under attack. Restarting the game.");
+        alert.getButtonTypes().setAll(new javafx.scene.control.ButtonType("Restart"));
+        alert.showAndWait().ifPresent(response -> restartGame());
+    }
+
+    private void showSolvedAlert() {
+        var alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText("Game Over");
+        alert.setContentText("Congratulations, you have solved the puzzle!");
+        closeGameButton.setVisible(true);
+        goToScoreboardButton.setVisible(true);
+        alert.showAndWait().ifPresent(response -> restartGame());
+    }
+
+    // Input Handling Methods
     @FXML
     private void handleKeyPress(KeyEvent keyEvent) {
         var restartKeyCombination = new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN);
@@ -159,39 +188,42 @@ public class GameController {
         var row = ChessState.BOARD_SIZE - 1 - GridPane.getRowIndex(source);
         var col = GridPane.getColumnIndex(source);
         Logger.debug("Click on square ({},{})", row, col);
-
         handleClickOn(row, col);
     }
 
     private void handleClickOn(int row, int col) {
         Position clickedPosition = new Position(row, col);
 
-        if (highlightedPosition.get() == null) { // No piece is currently selected
+        if (highlightedPosition.get() == null) {
             state.getPieceAt(row, col).ifPresent(pieceIndex -> {
-                if (state.isLegalToMoveFrom(clickedPosition)) {  // Check if the piece is under attack
+                if (state.isLegalToMoveFrom(clickedPosition)) {
                     highlightedPosition.set(clickedPosition);
-                    clearAndPopulateGrid(); // Update to show possible moves
+                    clearAndPopulateGrid();
                 }
             });
         } else {
             TwoPhaseMoveState.TwoPhaseMove<Position> move = new TwoPhaseMoveState.TwoPhaseMove<>(highlightedPosition.get(), clickedPosition);
             if (state.isLegalMove(move)) {
                 makeMove(move);
+                if (state.isDeadEnd()) {
+                    showDeadEndAlert();
+                }
             } else {
                 Logger.error("Illegal move attempted: from {} to {}", highlightedPosition.get(), clickedPosition);
-                highlightedPosition.set(null); // Deselect the piece
+                highlightedPosition.set(null);
             }
-            clearAndPopulateGrid(); // Update the grid after a move (or invalid move)
+            clearAndPopulateGrid();
         }
     }
 
     private void makeMove(TwoPhaseMoveState.TwoPhaseMove<Position> move) {
         state.makeMove(move);
         numberOfMoves.set(numberOfMoves.get() + 1);
-        highlightedPosition.set(null); // Deselect after the move
-        clearAndPopulateGrid(); // Ensure the grid is updated after the move
+        highlightedPosition.set(null);
+        clearAndPopulateGrid();
     }
 
+    // Grid and UI Methods
     private void clearAndPopulateGrid() {
         grid.getChildren().clear();
 
@@ -203,15 +235,8 @@ public class GameController {
     }
 
     @FXML
-    private void setGridPaneStyle() {
-        grid.getStyleClass().add("grid-pane");
-    }
-
-    @FXML
     private StackPane createSquare(int row, int col) {
         var square = new StackPane();
-
-        // Create the background square pane
         var squarePane = new StackPane();
         if (col % 2 == row % 2) {
             squarePane.getStyleClass().add("light-square");
@@ -235,26 +260,23 @@ public class GameController {
             squarePane.getChildren().add(imageView);
         });
 
-        // Add background labels for row and column indicators
         var backgroundLabelRow = new Label();
         var backgroundLabelCol = new Label();
 
-        if (col == 0) {  // First column for row indicators
+        if (col == 0) {
             backgroundLabelRow.setText(" " + (1 + row));
             backgroundLabelRow.getStyleClass().add("row-label");
             StackPane.setAlignment(backgroundLabelRow, Pos.TOP_LEFT);
         }
-        if (row == 0) {  // Last row for column indicators
+        if (row == 0) {
             backgroundLabelCol.setText((char) ('a' + col) + " ");
             backgroundLabelCol.getStyleClass().add("column-label");
             StackPane.setAlignment(backgroundLabelCol, Pos.BOTTOM_RIGHT);
         }
 
-        // Check for the corner square and add both labels if it is the corner
         if (col == 0 && row == 0) {
             square.getChildren().addAll(squarePane, backgroundLabelRow, backgroundLabelCol);
         } else {
-            // Add the appropriate background label(s) and the squarePane to the square
             if (col == 0) {
                 square.getChildren().addAll(squarePane, backgroundLabelRow);
             } else if (row == 0) {
@@ -268,24 +290,18 @@ public class GameController {
         return square;
     }
 
-    public void setPlayerName(String playerName) {
-        this.playerName = playerName;
-        nameLabel.setText(playerName);
+    @FXML
+    private void setGridPaneStyle() {
+        grid.getStyleClass().add("grid-pane");
     }
 
+    // Game Control Methods
     @FXML
     private void quitGame() {
         endTime = LocalDateTime.now();
         saveResult(false);
         Logger.info("Game quit by player: {}", playerName);
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/openingscreen.fxml"));
-            Stage stage = (Stage) quitButton.getScene().getWindow();
-            stage.setScene(new Scene(loader.load()));
-            stage.show();
-        } catch (IOException e) {
-            Logger.error("Failed to load openingscreen.fxml", e);
-        }
+        SceneLoader.loadScene("/openingscreen.fxml", (Stage) quitButton.getScene().getWindow());
     }
 
     @FXML
@@ -297,13 +313,6 @@ public class GameController {
     @FXML
     private void goToScoreboard() {
         Logger.info("Navigating to scoreboard by player: {}", playerName);
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/scoreboard.fxml"));
-            Stage stage = (Stage) goToScoreboardButton.getScene().getWindow();
-            stage.setScene(new Scene(loader.load()));
-            stage.show();
-        } catch (IOException e) {
-            Logger.error("Failed to load scoreboard.fxml", e);
-        }
+        SceneLoader.loadScene("/scoreboard.fxml", (Stage) goToScoreboardButton.getScene().getWindow());
     }
 }

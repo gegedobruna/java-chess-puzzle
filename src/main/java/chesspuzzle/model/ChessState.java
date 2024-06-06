@@ -14,6 +14,7 @@ public class ChessState implements TwoPhaseMoveState<Position> {
 
     private final ReadOnlyObjectWrapper<Position> kingPosition = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Position> knightPosition = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyBooleanWrapper deadEnd = new ReadOnlyBooleanWrapper();
     private final ReadOnlyBooleanWrapper solved = new ReadOnlyBooleanWrapper();
     private final List<String[]> board;
 
@@ -28,6 +29,7 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         Position goalPosition = new Position(0, 6);
         initializeBoard();
         solved.bind(this.kingPosition.isEqualTo(goalPosition).or(this.knightPosition.isEqualTo(goalPosition)));
+        checkDeadEndState();
     }
 
     private void initializeBoard() {
@@ -79,6 +81,11 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         return solved.get();
     }
 
+    private void checkDeadEndState() {
+        Set<TwoPhaseMove<Position>> legalMoves = getLegalMoves();
+        deadEnd.set(legalMoves.isEmpty());
+    }
+
     @Override
     public boolean isLegalToMoveFrom(Position position) {
         if (position.equals(kingPosition.get())) {
@@ -93,15 +100,14 @@ public class ChessState implements TwoPhaseMoveState<Position> {
     public boolean isLegalMove(TwoPhaseMove<Position> move) {
         Position from = move.from();
         Position to = move.to();
-        if (isValid(to)) {
-            if (from.equals(knightPosition.get()) && isValidKnightMove(knightPosition.get(), to)) {
-                return isUnderAttack(knightPosition.get(), kingPosition.get());
-            }
-            if (from.equals(kingPosition.get()) && isValidKingMove(kingPosition.get(), to)) {
-                return isUnderAttack(kingPosition.get(), knightPosition.get());
-            }
+        if (!isValid(to)) {
+            return false;
+        } else {
+            boolean validMove = (from.equals(knightPosition.get()) && isValidKnightMove(knightPosition.get(), to)) ||
+                    (from.equals(kingPosition.get()) && isValidKingMove(kingPosition.get(), to));
+
+            return validMove && isLegalToMoveFrom(from);
         }
-        return false;
     }
 
     @Override
@@ -121,6 +127,7 @@ public class ChessState implements TwoPhaseMoveState<Position> {
             knightPosition.set(to);
             board.get(knightPosition.get().row())[knightPosition.get().col()] = "N";
         }
+        checkDeadEndState();
     }
 
     @Override
@@ -128,7 +135,9 @@ public class ChessState implements TwoPhaseMoveState<Position> {
         Set<TwoPhaseMove<Position>> legalMoves = new HashSet<>();
         collectKingMoves(legalMoves);
         collectKnightMoves(legalMoves);
+        deadEnd.set(legalMoves.isEmpty());
         return legalMoves;
+
     }
 
     private void collectKingMoves(Set<TwoPhaseMove<Position>> legalMoves) {
@@ -190,5 +199,13 @@ public class ChessState implements TwoPhaseMoveState<Position> {
 
     public ReadOnlyBooleanProperty solvedProperty() {
         return solved.getReadOnlyProperty();
+    }
+
+    public ReadOnlyBooleanProperty deadEndProperty() {
+        return deadEnd.getReadOnlyProperty();
+    }
+
+    public boolean isDeadEnd() {
+        return deadEnd.get();
     }
 }

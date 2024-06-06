@@ -7,6 +7,7 @@ import javafx.stage.Stage;
 import org.tinylog.Logger;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 public class SceneLoader {
 
@@ -14,6 +15,19 @@ public class SceneLoader {
         try {
             FXMLLoader loader = new FXMLLoader(SceneLoader.class.getResource(fxmlPath));
             Parent root = loader.load();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            Logger.error("Failed to load " + fxmlPath, e);
+            showErrorAlert("Failed to load the scene. Please try again.");
+        }
+    }
+
+    public static void loadScene(String fxmlPath, Stage stage, Consumer<Object> controllerInitializer) {
+        try {
+            FXMLLoader loader = new FXMLLoader(SceneLoader.class.getResource(fxmlPath));
+            Parent root = loader.load();
+            controllerInitializer.accept(loader.getController());
             stage.setScene(new Scene(root));
             stage.show();
         } catch (IOException e) {
