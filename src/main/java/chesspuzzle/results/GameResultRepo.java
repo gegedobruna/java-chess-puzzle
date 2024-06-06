@@ -5,6 +5,9 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Represents a repository interface for game results.
+ */
 public interface GameResultRepo {
 
     List<GameResult> add(GameResult result) throws IOException;
@@ -12,10 +15,10 @@ public interface GameResultRepo {
     List<GameResult> getAll() throws IOException;
 
     default List<GameResult> getBest(int limit) throws IOException {
-        return getAll()
-                .stream()
+        return getAll().stream()
                 .filter(GameResult::isSolved)
-                .sorted(Comparator.comparingInt(GameResult::getSteps))
+                .sorted(Comparator.comparingInt(GameResult::getSteps)
+                        .thenComparing(GameResult::getDuration))
                 .limit(limit)
                 .toList();
     }

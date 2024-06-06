@@ -2,6 +2,9 @@ package chesspuzzle.model;
 
 import lombok.Getter;
 
+/**
+ * Represents the possible directions of movement for a chess piece.
+ */
 @Getter
 public enum Direction {
 
@@ -30,10 +33,16 @@ public enum Direction {
         this.colChange = colChange;
     }
 
+    /**
+     * @return true if the direction is a king move, false otherwise
+     */
     public boolean isKingMove() {
         return this.name().startsWith("KING_");
     }
 
+    /**
+     * @return true if the direction is a knight move, false otherwise
+     */
     public boolean isKnightMove() {
         return this.name().startsWith("KNIGHT_");
     }

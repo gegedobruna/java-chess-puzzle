@@ -5,6 +5,9 @@ import lombok.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 
+/**
+ * Represents a game result.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
