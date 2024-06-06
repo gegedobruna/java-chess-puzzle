@@ -86,6 +86,7 @@ public class GameController {
 
         // Initialize start time when game starts
         startTime = LocalDateTime.now();
+        setGridPaneStyle();
     }
 
     void restartGame() {
@@ -199,6 +200,11 @@ public class GameController {
                 grid.add(createSquare(row, col), col, ChessState.BOARD_SIZE - 1 - row);
             }
         }
+    }
+
+    @FXML
+    private void setGridPaneStyle() {
+        grid.getStyleClass().add("grid-pane");
     }
 
     @FXML

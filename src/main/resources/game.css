@@ -37,3 +37,8 @@
 .grid-padding {
     -fx-padding: 30px;
 }
+
+.grid-pane {
+    -fx-border-color: #245221;
+    -fx-border-width: 5px;
+}
