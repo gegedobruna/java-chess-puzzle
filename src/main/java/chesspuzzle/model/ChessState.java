@@ -5,7 +5,6 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import lombok.Getter;
 import puzzle.TwoPhaseMoveState;
-
 import java.util.*;
 
 /**
@@ -21,7 +20,7 @@ public class ChessState implements TwoPhaseMoveState<Position> {
     /**
      * The goal position for the king or knight.
      */
-    public static final Position goalPosition = new Position(0, 6);
+    public static final Position goalPosition = new Position(0, 6); // position g1
 
     private final ReadOnlyObjectWrapper<Position> kingPosition = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Position> knightPosition = new ReadOnlyObjectWrapper<>();

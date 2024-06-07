@@ -11,15 +11,9 @@ import util.SceneLoader;
 
 public final class OpeningScreen {
 
-    // FXML Fields
     @FXML
     private TextField nameField;
-    @FXML
-    private Button startGameButton;
-    @FXML
-    private Button viewScoreboardButton;
 
-    // Start Game Method
     @FXML
     private void startGame(ActionEvent actionEvent) {
         String name = nameField.getText().trim();
@@ -29,7 +23,7 @@ public final class OpeningScreen {
         } else {
             try {
                 Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
-                SceneLoader.loadScene("/game.fxml", stage, controller -> {
+                SceneLoader.loadScene("/fxml/game.fxml", stage, controller -> {
                     GameController gameController = (GameController) controller;
                     gameController.setPlayerName(name);
                 });
@@ -41,10 +35,9 @@ public final class OpeningScreen {
         }
     }
 
-    // View Scoreboard Method
     @FXML
     private void viewScoreboard(ActionEvent actionEvent) {
         Logger.info("Navigating to Scoreboard");
-        SceneLoader.loadScene("/scoreboard.fxml", (Stage) ((Node) actionEvent.getSource()).getScene().getWindow());
+        SceneLoader.loadScene("/fxml/scoreboard.fxml", (Stage) ((Node) actionEvent.getSource()).getScene().getWindow());
     }
 }
