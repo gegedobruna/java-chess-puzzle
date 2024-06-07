@@ -72,6 +72,6 @@ public class Scoreboard {
     @FXML
     private void goHome() {
         Logger.info("Navigating to home screen");
-        SceneLoader.loadScene("/openingscreen.fxml", (Stage) tableView.getScene().getWindow());
+        SceneLoader.loadScene("/fxml/openingscreen.fxml", (Stage) tableView.getScene().getWindow());
     }
 }

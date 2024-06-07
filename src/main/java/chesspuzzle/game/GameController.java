@@ -30,6 +30,7 @@ import puzzle.TwoPhaseMoveState;
 import util.OrdinalImageStorage;
 import util.SceneLoader;
 import util.javafx.ImageStorage;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -86,7 +87,7 @@ public class GameController {
         state.kingPositionProperty().addListener((observable, oldPosition, newPosition) -> clearAndPopulateGrid());
         state.knightPositionProperty().addListener((observable, oldPosition, newPosition) -> clearAndPopulateGrid());
         state.deadEndProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue && !deadEndHandled) {
+            if (newValue && !deadEndHandled && !state.isSolved()) {
                 deadEndHandled = true;
                 handleDeadEnd();
             }
@@ -186,7 +187,7 @@ public class GameController {
         var source = (Node) event.getSource();
         var row = ChessState.BOARD_SIZE - 1 - GridPane.getRowIndex(source);
         var col = GridPane.getColumnIndex(source);
-        Logger.debug("Click on square ({},{})", row, col);
+        Logger.info("Click on square ({},{})", row, col);
         handleClickOn(row, col);
     }
 
@@ -204,7 +205,7 @@ public class GameController {
             TwoPhaseMoveState.TwoPhaseMove<Position> move = new TwoPhaseMoveState.TwoPhaseMove<>(highlightedPosition.get(), clickedPosition);
             if (state.isLegalMove(move)) {
                 makeMove(move);
-                if (state.isDeadEnd()) {
+                if (!state.isSolved() && state.isDeadEnd()) {
                     showDeadEndAlert();
                 }
             } else {
@@ -236,6 +237,17 @@ public class GameController {
     @FXML
     private StackPane createSquare(int row, int col) {
         var square = new StackPane();
+        var squarePane = createSquarePane(row, col);
+
+        addPieceToSquare(row, col, squarePane);
+        addBackgroundLabels(row, col, square, squarePane);
+
+        square.setOnMouseClicked(this::handleMouseClick);
+        return square;
+    }
+
+    @FXML
+    private StackPane createSquarePane(int row, int col) {
         var squarePane = new StackPane();
         if (col % 2 == row % 2) {
             squarePane.getStyleClass().add("light-square");
@@ -251,14 +263,21 @@ public class GameController {
         } else if (currentPosition.equals(goalPosition.get())) {
             squarePane.getStyleClass().add("goal-square");
         }
+        return squarePane;
+    }
 
+    @FXML
+    private void addPieceToSquare(int row, int col, StackPane squarePane) {
         state.getPieceAt(row, col).flatMap(imageStorage::get).ifPresent(image -> {
             var imageView = new ImageView(image);
             imageView.getStyleClass().add("image-view");
             imageView.setVisible(true);
             squarePane.getChildren().add(imageView);
         });
+    }
 
+    @FXML
+    private void addBackgroundLabels(int row, int col, StackPane square, StackPane squarePane) {
         var backgroundLabelRow = new Label();
         var backgroundLabelCol = new Label();
 
@@ -281,12 +300,9 @@ public class GameController {
             } else if (row == 0) {
                 square.getChildren().addAll(squarePane, backgroundLabelCol);
             } else {
-                square.getChildren().addAll(squarePane);
+                square.getChildren().add(squarePane);
             }
         }
-
-        square.setOnMouseClicked(this::handleMouseClick);
-        return square;
     }
 
     @FXML
@@ -300,7 +316,7 @@ public class GameController {
         endTime = LocalDateTime.now();
         saveResult(false);
         Logger.info("Game quit by player: {}", playerName);
-        SceneLoader.loadScene("/openingscreen.fxml", (Stage) quitButton.getScene().getWindow());
+        SceneLoader.loadScene("/fxml/openingscreen.fxml", (Stage) quitButton.getScene().getWindow());
     }
 
     @FXML
@@ -312,6 +328,6 @@ public class GameController {
     @FXML
     private void goToScoreboard() {
         Logger.info("Navigating to scoreboard by player: {}", playerName);
-        SceneLoader.loadScene("/scoreboard.fxml", (Stage) goToScoreboardButton.getScene().getWindow());
+        SceneLoader.loadScene("/fxml/scoreboard.fxml", (Stage) goToScoreboardButton.getScene().getWindow());
     }
 }
