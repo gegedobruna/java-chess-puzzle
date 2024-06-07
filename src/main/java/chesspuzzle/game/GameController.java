@@ -93,7 +93,7 @@ public class GameController {
             }
         });
         startTime = LocalDateTime.now();
-        setGridPaneStyle();
+        setGridPaneBorder();
     }
 
     // State and Game Handling Methods
@@ -306,7 +306,7 @@ public class GameController {
     }
 
     @FXML
-    private void setGridPaneStyle() {
+    private void setGridPaneBorder() {
         grid.getStyleClass().add("grid-pane");
     }
 
